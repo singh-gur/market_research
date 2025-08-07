@@ -1,0 +1,26 @@
+market_news_gathering_task:
+  description: >
+    Gather the latest news and trends related to ticker {ticker}. This task involves
+    scraping news articles, financial reports, and other relevant sources to provide
+    a comprehensive overview of the current market sentiment.
+  expected_output: >
+    A summary of the latest news and trends related to ticker {ticker}, including
+    key developments and potential impacts on the market.
+  agent: market_news_scraper
+
+market_research_task:
+  description: >
+    Conduct a comprehensive analysis of the market trends, news, and fundamentals
+    related to ticker {ticker}. Provide a detailed report with actionable insights.
+  expected_output: >
+    A comprehensive analysis report with key findings, trends, and recommendations.
+  agent: market_researcher
+
+reporting_task:
+  description: >
+    Create a detailed report and recommendations based on the latest market data
+    for ticker {ticker}. The report should synthesize complex data into clear,
+    actionable insights.
+  expected_output: >
+    A detailed report with clear, actionable recommendations based on market data.
+  agent: market_data_analyst
