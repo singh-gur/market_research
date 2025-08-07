@@ -23,4 +23,4 @@ reporting_task:
     actionable insights.
   expected_output: >
     A detailed report with clear, actionable recommendations based on market data.
-  agent: market_data_analyst
+  agent: data_analyst

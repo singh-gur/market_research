@@ -20,16 +20,23 @@ class MarketResearch():
     # If you would like to add tools to your agents, you can learn more about it here:
     # https://docs.crewai.com/concepts/agents#agent-tools
     @agent
-    def researcher(self) -> Agent:
+    def market_news_scraper(self) -> Agent:
         return Agent(
-            config=self.agents_config['researcher'], # type: ignore[index]
+            config=self.agents_config['market_news_scraper'], # type: ignore[index]
             verbose=True
         )
 
     @agent
-    def reporting_analyst(self) -> Agent:
+    def market_researcher(self) -> Agent:
         return Agent(
-            config=self.agents_config['reporting_analyst'], # type: ignore[index]
+            config=self.agents_config['market_researcher'], # type: ignore[index]
+            verbose=True
+        )
+
+    @agent
+    def data_analyst(self) -> Agent:
+        return Agent(
+            config=self.agents_config['data_analyst'], # type: ignore[index]
             verbose=True
         )
 
@@ -37,9 +44,15 @@ class MarketResearch():
     # task dependencies, and task callbacks, check out the documentation:
     # https://docs.crewai.com/concepts/tasks#overview-of-a-task
     @task
-    def research_task(self) -> Task:
+    def market_news_gathering_task(self) -> Task:
         return Task(
-            config=self.tasks_config['research_task'], # type: ignore[index]
+            config=self.tasks_config['market_news_gathering_task'], # type: ignore[index]
+        )
+
+    @task
+    def market_research_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['market_research_task'], # type: ignore[index]
         )
 
     @task
