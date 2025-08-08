@@ -7,3 +7,8 @@ push commit_message:
 
 install:
     @uv sync
+
+
+fmt:
+    @ruff check .
+    @ruff fix .
