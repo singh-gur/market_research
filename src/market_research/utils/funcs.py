@@ -10,7 +10,8 @@ def async_to_sync(async_func: Callable[..., Any]) -> Callable[..., Any]:
 
     This wrapper automatically handles:
     - No event loop: creates one with asyncio.run()
-    - Running event loop: runs in a separate thread to avoid blocking
+    - Running event loop: tries nest_asyncio first, then thread pool as fallback
+    - Jupyter/IPython compatibility with nested event loops
 
     Args:
         async_func: The async function to wrap
@@ -33,7 +34,17 @@ def async_to_sync(async_func: Callable[..., Any]) -> Callable[..., Any]:
     def wrapper(*args, **kwargs):
         try:
             # Check if there's a running event loop
-            asyncio.get_running_loop()
+            loop = asyncio.get_running_loop()
+            
+            # Try to enable nested event loops for Jupyter compatibility
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+                # With nest_asyncio, we can run async code directly in Jupyter
+                return loop.run_until_complete(async_func(*args, **kwargs))
+            except ImportError:
+                # nest_asyncio not available, fall back to thread pool approach
+                pass
 
             # If we get here, there's a running loop - use thread pool
             def run_in_thread():
