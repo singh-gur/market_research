@@ -15,6 +15,9 @@ class YahooNewsScraperInput(BaseModel):
     max_articles: int = Field(
         default=10, description="Maximum number of articles to scrape"
     )
+    max_content_length: int = Field(
+        default=500, description="Maximum length of detailed content for each article"
+    )
 
 
 class YahooNewsScraperTool(BaseTool):
@@ -124,7 +127,7 @@ class YahooNewsScraperTool(BaseTool):
             logging.warning(f"Error scraping detailed page {url}: {e}")
             return None, None
 
-    async def _scrape_news_async(self, ticker: str, max_articles: int = 10) -> str:
+    async def _scrape_news_async(self, ticker: str, max_articles: int = 10, max_content_length: int = 500) -> str:
         """Async method to scrape Yahoo Finance news"""
         try:
             # Clean up ticker symbol and validate
@@ -214,8 +217,8 @@ class YahooNewsScraperTool(BaseTool):
                     news_data.append(
                         {
                             "title": title,
-                            "content": detailed_content[:500] + "..."
-                            if len(detailed_content) > 500
+                            "content": detailed_content[:max_content_length] + "..."
+                            if len(detailed_content) > max_content_length
                             else detailed_content,
                             "url": url,
                             "source": source,
@@ -265,13 +268,13 @@ class YahooNewsScraperTool(BaseTool):
                     pass
 
     @async_to_sync
-    async def _run(self, ticker: str, max_articles: int = 10) -> str:
+    async def _run(self, ticker: str, max_articles: int = 10, max_content_length: int = 500) -> str:
         """Synchronous wrapper for the async scrape method"""
-        result = await self._scrape_news_async(ticker, max_articles)
+        result = await self._scrape_news_async(ticker, max_articles, max_content_length)
         return result
 
 
-def yahoo_news_scraper_tool(ticker: str, max_articles: int = 10) -> str:
+def yahoo_news_scraper_tool(ticker: str, max_articles: int = 10, max_content_length: int = 500) -> str:
     """Convenience function to create and run the Yahoo News Scraper tool"""
     tool = YahooNewsScraperTool()
-    return tool._run(ticker=ticker, max_articles=max_articles)
+    return tool._run(ticker=ticker, max_articles=max_articles, max_content_length=max_content_length)
