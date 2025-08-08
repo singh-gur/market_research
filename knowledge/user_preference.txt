@@ -1,4 +1,4 @@
-User name is John Doe.
-User is an AI Engineer.
-User is interested in AI Agents.
-User is based in San Francisco, California.
+User name is Garry
+User is a invididual investor
+User invests in common stocks and etfs
+User is based in new york
