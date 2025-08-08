@@ -6,7 +6,7 @@ push commit_message:
     @git push
 
 install:
-    @uv sync
+    @uv sync --all-groups
 
 
 fmt:
