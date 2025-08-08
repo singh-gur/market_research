@@ -2,7 +2,6 @@
 import sys
 import warnings
 
-from datetime import datetime
 
 from market_research.crew import MarketResearch
 

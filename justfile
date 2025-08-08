@@ -10,5 +10,4 @@ install:
 
 
 fmt:
-    @ruff check .
-    @ruff fix .
+    @uv run ruff check --fix .

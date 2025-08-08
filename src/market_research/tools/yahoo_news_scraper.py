@@ -3,7 +3,6 @@ from typing import Type, Optional
 from pydantic import BaseModel, Field
 import logging
 import asyncio
-from datetime import datetime
 from bs4 import BeautifulSoup
 
 
@@ -117,7 +116,7 @@ class YahooNewsScraperTool(BaseTool):
             
             # Setup Playwright
             if not await self._setup_playwright():
-                return f"Error: Playwright not available. Install with: pip install playwright && playwright install"
+                return "Error: Playwright not available. Install with: pip install playwright && playwright install"
             
             # Build URL and selector
             news_url = f"https://finance.yahoo.com/quote/{ticker}/latest-news/"
