@@ -21,21 +21,16 @@ class YahooNewsScraperInput(BaseModel):
 
 
 class YahooNewsScraperTool(BaseTool):
-    name: str = "Yahoo News Scraper"
+    name: str = "yahoo_news_scraper"
     description: str = (
-        "Scrapes latest news articles from Yahoo Finance for a given stock ticker using Playwright. "
-        "Returns article titles, summaries, publication dates, URLs, and sources."
+        "Scrapes latest news articles from Yahoo Finance for a stock ticker symbol. "
+        "This tool fetches real-time financial news, article titles, summaries, publication dates, and URLs. "
+        "Use this when you need current news and market information about a specific stock."
     )
     args_schema: Type[BaseModel] = YahooNewsScraperInput
 
     def __init__(self):
-        super().__init__(
-            name="Yahoo News Scraper",
-            description=(
-                "Scrapes latest news articles from Yahoo Finance for a given stock ticker using Playwright. "
-                "Returns article titles, summaries, publication dates, URLs, and sources."
-            ),
-        )
+        super().__init__()
         self._playwright = None
         self._browser = None
 
@@ -311,13 +306,24 @@ class YahooNewsScraperTool(BaseTool):
                 except Exception:
                     pass
 
-    @async_to_sync
-    async def _run(
+    def _run(
         self, ticker: str, max_articles: int = 5, max_content_length: int = 1000
     ) -> str:
         """Synchronous wrapper for the async scrape method"""
-        result = await self._scrape_news_async(ticker, max_articles, max_content_length)
-        return result
+        try:
+            logging.info(f"YahooNewsScraperTool._run called with ticker={ticker}, max_articles={max_articles}, max_content_length={max_content_length}")
+            
+            @async_to_sync
+            async def _async_wrapper():
+                return await self._scrape_news_async(ticker, max_articles, max_content_length)
+            
+            result = _async_wrapper()
+            logging.info(f"YahooNewsScraperTool._run completed successfully, result length: {len(result) if result else 0}")
+            return result
+        except Exception as e:
+            error_msg = f"YahooNewsScraperTool._run failed: {type(e).__name__}: {str(e)}"
+            logging.error(error_msg)
+            return error_msg
 
 
 def yahoo_news_scraper_tool(

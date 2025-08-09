@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import sys
 import warnings
-
+import logging
 
 from market_research.crew import MarketResearch
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # This main file is intended to be a way for you to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
