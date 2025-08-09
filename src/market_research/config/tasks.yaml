@@ -1,8 +1,8 @@
 market_news_gathering_task:
   description: >
-    Gather the latest news and trends related to ticker {ticker}. This task involves
-    scraping news articles, financial reports, and other relevant sources to provide
-    a comprehensive overview of the current market sentiment.
+    Scrape yahoo finance for the latest news and trends related to ticker {ticker}.
+    Look for 5 articles with max content length of 1000 words each. Summarize the key points
+    and trends from these articles.
   expected_output: >
     A summary of the latest news and trends related to ticker {ticker}, including
     key developments and potential impacts on the market.
