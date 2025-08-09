@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, Type
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -72,6 +72,8 @@ class YahooNewsScraperTool(BaseTool):
     async def _scrape_webpage(self, url: str, wait_for: str, timeout: int = 30000):
         """Scrape a webpage using Playwright and return the HTML content"""
         try:
+            if self._browser is None:
+                raise RuntimeError("Browser not initialized")
             page = await self._browser.new_page()
 
             # Set user agent to avoid bot detection
@@ -113,13 +115,13 @@ class YahooNewsScraperTool(BaseTool):
 
             # Extract title
             title_elem = soup.find(
-                name=("div", "h1"), class_=lambda x: x and "cover-title" in x
+                name=("div", "h1"), class_=lambda x: x is not None and "cover-title" in str(x)
             )
-            title = title_elem.get_text(strip=True) if title_elem else ""
+            title = title_elem.get_text(strip=True) if isinstance(title_elem, Tag) else ""
 
             # Extract article body
-            body_elem = soup.find("div", class_=lambda x: x and "body" in x)
-            article_body = body_elem.get_text(strip=True) if body_elem else ""
+            body_elem = soup.find("div", class_=lambda x: x is not None and "body" in str(x))
+            article_body = body_elem.get_text(strip=True) if isinstance(body_elem, Tag) else ""
 
             return article_body, title
 
@@ -157,7 +159,7 @@ class YahooNewsScraperTool(BaseTool):
 
             # Find story items using the specific selector
             articles_data = soup.find_all(
-                "li", class_=lambda x: x and "story-item" in x
+                "li", class_=lambda x: x is not None and "story-item" in str(x)
             )
             logging.info(f"Found {len(articles_data)} story items")
 
@@ -166,54 +168,94 @@ class YahooNewsScraperTool(BaseTool):
             for article in articles_data:
                 if len(news_data) >= max_articles:
                     break
+                
+                # Ensure article is a Tag element
+                if not isinstance(article, Tag):
+                    continue
 
                 try:
                     # Extract title from h3
                     title_elem = article.find("h3")
-                    if not title_elem:
+                    if not isinstance(title_elem, Tag):
                         continue
                     title = title_elem.get_text(strip=True)
 
                     # Extract URL
                     url_elem = article.find("a")
                     url = ""
-                    if url_elem and url_elem.get("href"):
+                    if isinstance(url_elem, Tag):
                         href = url_elem.get("href")
-                        if not href.startswith("http"):
-                            url = f"https://finance.yahoo.com{href}"
-                        else:
-                            url = href
+                        if href and isinstance(href, str):
+                            if not href.startswith("http"):
+                                url = f"https://finance.yahoo.com{href}"
+                            else:
+                                url = href
 
                     # Try to get detailed content
                     detailed_content = ""
                     if url:
                         detailed_content, _ = await self._scrape_detailed_page(url)
 
-                    # Fallback to summary from main page if detailed content not available
+                    # Fallback to summary from main page if detailed content not available  
                     if not detailed_content:
                         summary_elem = article.find("p")
                         detailed_content = (
-                            summary_elem.get_text(strip=True) if summary_elem else ""
+                            summary_elem.get_text(strip=True) if isinstance(summary_elem, Tag) else ""
                         )
 
                     # Extract source and published date
                     source = "Yahoo Finance"
                     published_at = "Unknown"
 
-                    source_date_elem = article.find(
-                        "div", class_=lambda x: x and "publishing" in x
-                    )
-                    if source_date_elem and len(source_date_elem.contents) >= 3:
+                    # Try multiple selectors for date/time information
+                    time_selectors = [
+                        "time",  # Standard time element
+                        "[datetime]",  # Any element with datetime attribute
+                        ".time",  # Class-based time selector
+                        ".date",  # Class-based date selector
+                        "[data-module='TimeAgo']",  # Yahoo-specific time module
+                        "span[title]",  # Span with title attribute (often contains full date)
+                    ]
+                    
+                    # Try each selector
+                    for selector in time_selectors:
                         try:
-                            source = source_date_elem.contents[0].get_text(strip=True)
-                            published_at = source_date_elem.contents[2].get_text(
-                                strip=True
-                            )
-                        except (IndexError, AttributeError):
-                            # Fallback to time element
-                            time_elem = source_date_elem.find("time")
-                            if time_elem:
-                                published_at = time_elem.get_text(strip=True)
+                            time_elem = article.select_one(selector)
+                            if time_elem and isinstance(time_elem, Tag):
+                                # Try datetime attribute first
+                                datetime_attr = time_elem.get('datetime')
+                                if datetime_attr:
+                                    published_at = datetime_attr
+                                    break
+                                
+                                # Try title attribute 
+                                title_attr = time_elem.get('title')
+                                if title_attr:
+                                    published_at = title_attr
+                                    break
+                                
+                                # Try text content
+                                text_content = time_elem.get_text(strip=True)
+                                if text_content and text_content not in ['', 'Unknown']:
+                                    published_at = text_content
+                                    break
+                        except Exception:
+                            continue
+                    
+                    # Additional fallback: look for any text that looks like a date/time
+                    if published_at == "Unknown":
+                        # Look for elements containing common date patterns
+                        all_text_elements = article.find_all(string=True)
+                        
+                        for text_elem in all_text_elements:
+                            if text_elem and isinstance(text_elem, str):
+                                text_lower = text_elem.lower().strip()
+                                if text_lower and any(
+                                    pattern in text_lower for pattern in 
+                                    ['ago', 'min', 'hour', 'day', 'week', 'month', 'year', 'am', 'pm', '2024', '2023']
+                                ) and len(text_elem.strip()) < 50:  # Reasonable date length
+                                    published_at = text_elem.strip()
+                                    break
 
                     # Add to results
                     news_data.append(
@@ -264,7 +306,7 @@ class YahooNewsScraperTool(BaseTool):
                     pass
             if self._playwright:
                 try:
-                    await self._playwright.__aexit__(None, None, None)
+                    # Close playwright 
                     self._playwright = None
                 except Exception:
                     pass
