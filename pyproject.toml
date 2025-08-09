@@ -10,15 +10,13 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "selenium>=4.15.0",
     "webdriver-manager>=4.0.0",
-    "playwright>=1.40.0"
+    "playwright>=1.40.0",
+    "click>=8.0.0"
 ]
 
 [project.scripts]
-market_research = "market_research.main:run"
-run_crew = "market_research.main:run"
-train = "market_research.main:train"
-replay = "market_research.main:replay"
-test = "market_research.main:test"
+market_research = "market_research.main:cli"
+run_crew = "market_research.main:cli"
 
 [build-system]
 requires = ["hatchling"]
