@@ -30,7 +30,10 @@ class YahooNewsScraperTool(BaseTool):
     args_schema: Type[BaseModel] = YahooNewsScraperInput
 
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            name="yahoo_news_scraper",
+            description="Scrapes latest news articles from Yahoo Finance for a stock ticker symbol. This tool fetches real-time financial news, article titles, summaries, publication dates, and URLs. Use this when you need current news and market information about a specific stock."
+        )
         self._playwright = None
         self._browser = None
 
