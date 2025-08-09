@@ -35,10 +35,11 @@ def async_to_sync(async_func: Callable[..., Any]) -> Callable[..., Any]:
         try:
             # Check if there's a running event loop
             loop = asyncio.get_running_loop()
-            
+
             # Try to enable nested event loops for Jupyter compatibility
             try:
                 import nest_asyncio
+
                 nest_asyncio.apply()
                 # With nest_asyncio, we can run async code directly in Jupyter
                 return loop.run_until_complete(async_func(*args, **kwargs))

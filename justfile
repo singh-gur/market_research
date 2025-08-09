@@ -11,3 +11,4 @@ install:
 
 fmt:
     @uv run ruff check --fix .
+    @ruff format .
