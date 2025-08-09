@@ -32,7 +32,7 @@ class YahooNewsScraperTool(BaseTool):
     def __init__(self):
         super().__init__(
             name="yahoo_news_scraper",
-            description="Scrapes latest news articles from Yahoo Finance for a stock ticker symbol. This tool fetches real-time financial news, article titles, summaries, publication dates, and URLs. Use this when you need current news and market information about a specific stock."
+            description="Scrapes latest news articles from Yahoo Finance for a stock ticker symbol. This tool fetches real-time financial news, article titles, summaries, publication dates, and URLs. Use this when you need current news and market information about a specific stock.",
         )
         self._playwright = None
         self._browser = None
@@ -113,13 +113,20 @@ class YahooNewsScraperTool(BaseTool):
 
             # Extract title
             title_elem = soup.find(
-                name=("div", "h1"), class_=lambda x: x is not None and "cover-title" in str(x)
+                name=("div", "h1"),
+                class_=lambda x: x is not None and "cover-title" in str(x),
             )
-            title = title_elem.get_text(strip=True) if isinstance(title_elem, Tag) else ""
+            title = (
+                title_elem.get_text(strip=True) if isinstance(title_elem, Tag) else ""
+            )
 
             # Extract article body
-            body_elem = soup.find("div", class_=lambda x: x is not None and "body" in str(x))
-            article_body = body_elem.get_text(strip=True) if isinstance(body_elem, Tag) else ""
+            body_elem = soup.find(
+                "div", class_=lambda x: x is not None and "body" in str(x)
+            )
+            article_body = (
+                body_elem.get_text(strip=True) if isinstance(body_elem, Tag) else ""
+            )
 
             return article_body, title
 
@@ -141,7 +148,9 @@ class YahooNewsScraperTool(BaseTool):
 
             # Setup Playwright
             if not await self._setup_playwright():
-                return "Error: Playwright not available. Install with: pip install playwright && playwright install"
+                return (
+                    "Error: Playwright not available. Install with: playwright install"
+                )
 
             # Build URL and selector
             news_url = f"https://finance.yahoo.com/quote/{ticker}/latest-news/"
@@ -166,7 +175,7 @@ class YahooNewsScraperTool(BaseTool):
             for article in articles_data:
                 if len(news_data) >= max_articles:
                     break
-                
+
                 # Ensure article is a Tag element
                 if not isinstance(article, Tag):
                     continue
@@ -194,11 +203,13 @@ class YahooNewsScraperTool(BaseTool):
                     if url:
                         detailed_content, _ = await self._scrape_detailed_page(url)
 
-                    # Fallback to summary from main page if detailed content not available  
+                    # Fallback to summary from main page if detailed content not available
                     if not detailed_content:
                         summary_elem = article.find("p")
                         detailed_content = (
-                            summary_elem.get_text(strip=True) if isinstance(summary_elem, Tag) else ""
+                            summary_elem.get_text(strip=True)
+                            if isinstance(summary_elem, Tag)
+                            else ""
                         )
 
                     # Extract source and published date
@@ -214,44 +225,60 @@ class YahooNewsScraperTool(BaseTool):
                         "[data-module='TimeAgo']",  # Yahoo-specific time module
                         "span[title]",  # Span with title attribute (often contains full date)
                     ]
-                    
+
                     # Try each selector
                     for selector in time_selectors:
                         try:
                             time_elem = article.select_one(selector)
                             if time_elem and isinstance(time_elem, Tag):
                                 # Try datetime attribute first
-                                datetime_attr = time_elem.get('datetime')
+                                datetime_attr = time_elem.get("datetime")
                                 if datetime_attr:
                                     published_at = datetime_attr
                                     break
-                                
-                                # Try title attribute 
-                                title_attr = time_elem.get('title')
+
+                                # Try title attribute
+                                title_attr = time_elem.get("title")
                                 if title_attr:
                                     published_at = title_attr
                                     break
-                                
+
                                 # Try text content
                                 text_content = time_elem.get_text(strip=True)
-                                if text_content and text_content not in ['', 'Unknown']:
+                                if text_content and text_content not in ["", "Unknown"]:
                                     published_at = text_content
                                     break
                         except Exception:
                             continue
-                    
+
                     # Additional fallback: look for any text that looks like a date/time
                     if published_at == "Unknown":
                         # Look for elements containing common date patterns
                         all_text_elements = article.find_all(string=True)
-                        
+
                         for text_elem in all_text_elements:
                             if text_elem and isinstance(text_elem, str):
                                 text_lower = text_elem.lower().strip()
-                                if text_lower and any(
-                                    pattern in text_lower for pattern in 
-                                    ['ago', 'min', 'hour', 'day', 'week', 'month', 'year', 'am', 'pm', '2024', '2023']
-                                ) and len(text_elem.strip()) < 50:  # Reasonable date length
+                                if (
+                                    text_lower
+                                    and any(
+                                        pattern in text_lower
+                                        for pattern in [
+                                            "ago",
+                                            "min",
+                                            "hour",
+                                            "day",
+                                            "week",
+                                            "month",
+                                            "year",
+                                            "am",
+                                            "pm",
+                                            "2024",
+                                            "2023",
+                                        ]
+                                    )
+                                    and len(text_elem.strip()) < 50
+                                ):  # Reasonable date length
                                     published_at = text_elem.strip()
                                     break
 
@@ -304,7 +331,7 @@ class YahooNewsScraperTool(BaseTool):
                     pass
             if self._playwright:
                 try:
-                    # Close playwright 
+                    # Close playwright
                     self._playwright = None
                 except Exception:
                     pass
@@ -314,17 +341,25 @@ class YahooNewsScraperTool(BaseTool):
     ) -> str:
         """Synchronous wrapper for the async scrape method"""
         try:
-            logging.info(f"YahooNewsScraperTool._run called with ticker={ticker}, max_articles={max_articles}, max_content_length={max_content_length}")
-            
+            logging.info(
+                f"YahooNewsScraperTool._run called with ticker={ticker}, max_articles={max_articles}, max_content_length={max_content_length}"
+            )
+
             @async_to_sync
             async def _async_wrapper():
-                return await self._scrape_news_async(ticker, max_articles, max_content_length)
-            
+                return await self._scrape_news_async(
+                    ticker, max_articles, max_content_length
+                )
+
             result = _async_wrapper()
-            logging.info(f"YahooNewsScraperTool._run completed successfully, result length: {len(result) if result else 0}")
+            logging.info(
+                f"YahooNewsScraperTool._run completed successfully, result length: {len(result) if result else 0}"
+            )
             return result
         except Exception as e:
-            error_msg = f"YahooNewsScraperTool._run failed: {type(e).__name__}: {str(e)}"
+            error_msg = (
+                f"YahooNewsScraperTool._run failed: {type(e).__name__}: {str(e)}"
+            )
             logging.error(error_msg)
             return error_msg
 

@@ -1,28 +1,31 @@
 #!/usr/bin/env python
+import logging
 import sys
 import warnings
-import logging
 
 from market_research.crew import MarketResearch
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 # This main file is intended to be a way for you to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+
 def run():
     """
     Run the crew.
     """
     inputs = {
-        'ticker': 'TLN',
+        "ticker": "TLN",
     }
-    
+
     try:
         MarketResearch().crew().kickoff(inputs=inputs)
     except Exception as e:
@@ -34,13 +37,16 @@ def train():
     Train the crew for a given number of iterations.
     """
     inputs = {
-        'ticker': 'TLN',
+        "ticker": "TLN",
     }
     try:
-        MarketResearch().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        MarketResearch().crew().train(
+            n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
+        )
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
+
 
 def replay():
     """
@@ -52,16 +58,19 @@ def replay():
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
+
 def test():
     """
     Test the crew execution and returns the results.
     """
     inputs = {
-        'ticker': 'TLN',
+        "ticker": "TLN",
     }
-    
+
     try:
-        MarketResearch().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
+        MarketResearch().crew().test(
+            n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs
+        )
 
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
